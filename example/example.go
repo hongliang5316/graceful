@@ -7,19 +7,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kuangchanglang/graceful"
+	"github.com/hongliang5316/graceful"
 )
 
 type handler struct {
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(10 * time.Second)
 	fmt.Fprintf(w, "Hello, port: %v, %q", r.Host, html.EscapeString(r.URL.Path))
 }
 
 func main() {
-	graceful.ListenAndServe(":9222", &handler{})
+	server := graceful.NewServer(graceful.WithPIDFile("./graceful.pid"))
+	server.Register(":9222", &handler{})
+	err := server.Run()
+	fmt.Printf("error: %v\n", err)
 }
 
 func listenMultiAddrs() {

@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package graceful
@@ -32,6 +33,7 @@ type option struct {
 	stopSignals   []syscall.Signal
 	watchInterval time.Duration
 	stopTimeout   time.Duration
+	pidFile       string
 }
 
 type Option func(o *option)
@@ -51,7 +53,8 @@ func WithStopSignals(sigs []syscall.Signal) Option {
 }
 
 // WithStopTimeout set stop timeout for graceful shutdown
-//  if timeout occurs, running connections will be discard violently.
+//
+//	if timeout occurs, running connections will be discard violently.
 func WithStopTimeout(timeout time.Duration) Option {
 	return func(o *option) {
 		o.stopTimeout = timeout
@@ -62,6 +65,12 @@ func WithStopTimeout(timeout time.Duration) Option {
 func WithWatchInterval(timeout time.Duration) Option {
 	return func(o *option) {
 		o.watchInterval = timeout
+	}
+}
+
+func WithPIDFile(pidFile string) Option {
+	return func(o *option) {
+		o.pidFile = pidFile
 	}
 }
 
@@ -83,6 +92,7 @@ func NewServer(opts ...Option) *Server {
 		stopSignals:   defaultStopSignals,
 		watchInterval: defaultWatchInterval,
 		stopTimeout:   defaultStopTimeout,
+		pidFile:       "",
 	}
 	for _, opt := range opts {
 		opt(option)

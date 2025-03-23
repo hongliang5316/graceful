@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package graceful
@@ -31,8 +32,26 @@ type master struct {
 	sync.Mutex
 }
 
+func writePidFile(pidFile string) error {
+	f, err := os.OpenFile(pidFile, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = fmt.Fprintf(f, "%d", os.Getpid())
+	return err
+}
+
 func (m *master) run() error {
 	m.Lock()
+	// init pidfile
+	if m.opt.pidFile != "" {
+		if err := writePidFile(m.opt.pidFile); err != nil {
+			m.Unlock()
+			return err
+		}
+	}
+
 	// init fds
 	err := m.initFDs()
 	if err != nil {
